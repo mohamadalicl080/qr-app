@@ -66,27 +66,16 @@ async function checkVehicleStatus(plate) {
 
         const match = rows.find(row => row[0] && row[0].trim().toUpperCase() === normalizedPlate);
 
-        
-if (match) {
-    const estado = match[match.length - 1]?.trim().toLowerCase();
+        if (match) {
+            const estado = match[match.length - 1]?.trim().toLowerCase();
+            const porcentajePagado = calcularPorcentajePagado(match); // Nueva función para calcular el porcentaje
 
-    // Identificar columnas de meses (desde índice 3 hasta antes del último)
-    const meses = match.slice(3, match.length - 1);
-    const pagados = meses.filter(m => m.trim().toLowerCase() === "pagado").length;
-    const vencidos = meses.filter(m => m.trim().toLowerCase() === "vencido").length;
-    const totalEvaluados = pagados + vencidos;
-
-    const porcentajePagado = totalEvaluados > 0 ? (pagados / totalEvaluados) * 100 : 0;
-
-    if (estado === 'rojo') {
-        showStatus('red', `🔴 Acceso Denegado: ${match[1] || 'Sin nombre'} (${normalizedPlate})`);
-    } else if (porcentajePagado >= 60 && porcentajePagado < 100) {
-        showStatus('yellow', `🟡 Autorizado con deuda: ${match[1] || 'Sin nombre'} (${normalizedPlate})`);
-    } else {
-        showStatus('green', `🟢 Autorizado: ${match[1] || 'Sin nombre'} (${normalizedPlate})`);
-    }
-}
- (${normalizedPlate})`);
+            if (estado === 'rojo') {
+                showStatus('red', `Acceso Denegado: ${match[1] || 'Sin nombre'} (${normalizedPlate})`);
+            } else if (porcentajePagado >= 60 && porcentajePagado < 100) {
+                showStatus('yellow', `Autorizado con deuda pendiente: ${match[1] || 'Sin nombre'} (${normalizedPlate})`);
+            } else {
+                showStatus('green', `Autorizado: ${match[1] || 'Sin nombre'} (${normalizedPlate})`);
             }
         } else {
             showStatus('gray', 'Patente no encontrada en el registro');
@@ -96,6 +85,25 @@ if (match) {
         console.error('Error al consultar la planilla:', error);
         showStatus('gray', 'Error al consultar la planilla');
     }
+}
+
+// Nueva función para calcular el porcentaje de meses pagados
+function calcularPorcentajePagado(row) {
+    // Asumiendo que los meses pagados están en columnas específicas
+    // Por ejemplo, desde la columna 2 hasta la 13 (12 meses)
+    const inicioPagos = 2; // Ajusta este índice según tu estructura de datos
+    const finPagos = 13;   // Ajusta este índice según tu estructura de datos
+    
+    let mesesPagados = 0;
+    let totalMeses = finPagos - inicioPagos + 1;
+
+    for (let i = inicioPagos; i <= finPagos; i++) {
+        if (row[i] && row[i].trim().toLowerCase() === 'pagado') {
+            mesesPagados++;
+        }
+    }
+
+    return (mesesPagados / totalMeses) * 100;
 }
 
 // Mostrar estado
