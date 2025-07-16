@@ -13,14 +13,14 @@ function showLoading() {
 
 // Inicializar Google Sheets API
 async function initGoogleSheetsAPI() {
-    try {
+        try {
         await gapi.client.init({
             apiKey: API_KEY,
             discoveryDocs: ["https://sheets.googleapis.com/$discovery/rest?version=v4"],
         });
         console.log('API inicializada correctamente');
         isApiReady = true;
-        
+                
         // Verificar conexión
         const testResponse = await gapi.client.sheets.spreadsheets.values.get({
             spreadsheetId: SPREADSHEET_ID,
@@ -35,7 +35,7 @@ async function initGoogleSheetsAPI() {
 
 // Cargar la API de Google
 function loadGoogleAPI() {
-    gapi.load('client', initGoogleSheetsAPI);
+        gapi.load('client', initGoogleSheetsAPI);
 }
 
 // Verificar estado del vehículo
@@ -50,8 +50,7 @@ async function checkVehicleStatus(plate) {
         return;
     }
 
-    showLoading();
-
+    
     try {
         const response = await gapi.client.sheets.spreadsheets.values.get({
             spreadsheetId: SPREADSHEET_ID,
