@@ -73,11 +73,8 @@ async function checkVehicleStatus(plate) {
             } else {
                 showStatus('green', `Autorizado: ${match[1] || 'Sin nombre'} (${normalizedPlate})`);
             }
-             } else (estado === 'amarillo') {
-                showStatus('yellow', `Autorizado con deuda: ${match[1] || 'Sin nombre'} (${normalizedPlate})`);
-            }
         } else {
-            showStatus('gray', 'Patente no encontrada en el registro');
+            showStatus('purple', 'Patente no encontrada en el registro');
         }
 
     } catch (error) {
