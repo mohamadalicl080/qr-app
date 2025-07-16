@@ -66,16 +66,16 @@ async function checkVehicleStatus(plate) {
 
         const match = rows.find(row => row[0] && row[0].trim().toUpperCase() === normalizedPlate);
 
-        if (match) {
-            const estado = match[match.length - 1]?.trim().toLowerCase();
-            if (estado === 'rojo') {
-                showStatus('red', `Acceso Denegado: ${match[1] || 'Sin nombre'} (${normalizedPlate})`);
-            } else {
-                showStatus('green', `Autorizado: ${match[1] || 'Sin nombre'} (${normalizedPlate})`);
-            }
-        } else {
-            showStatus('red', 'Patente no encontrada en el registro');
-        }
+          if (estado === 'rojo') {
+        showStatus('red', `🔴 Acceso Denegado: ${match[1] || 'Sin nombre'} (${normalizedPlate})`);
+    } else if (porcentajePagado >= 60 && porcentajePagado < 100) {
+        showStatus('yellow', `🟡 Autorizado con deuda pendiente: ${match[1] || 'Sin nombre'} (${normalizedPlate})`);
+    } else {
+        showStatus('green', `🟢 Autorizado: ${match[1] || 'Sin nombre'} (${normalizedPlate})`);
+    }
+} else {
+    showStatus('red', 'Patente no encontrada en el registro');
+}
 
     } catch (error) {
         console.error('Error al consultar la planilla:', error);
