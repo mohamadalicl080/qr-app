@@ -70,19 +70,20 @@ async function checkVehicleStatus(plate) {
 if (match) {
     const estado = match[match.length - 1]?.trim().toLowerCase();
 
-    // Calcular porcentaje de pagos
-    const meses = match.slice(3, match.length - 1); // Asumiendo que las columnas de meses están entre la 4 y anteúltima
+    // Identificar columnas de meses (desde índice 3 hasta antes del último)
+    const meses = match.slice(3, match.length - 1);
     const pagados = meses.filter(m => m.trim().toLowerCase() === "pagado").length;
     const vencidos = meses.filter(m => m.trim().toLowerCase() === "vencido").length;
-    const totalValidos = pagados + vencidos;
-    const porcentajePagado = totalValidos === 0 ? 0 : (pagados / totalValidos) * 100;
+    const totalEvaluados = pagados + vencidos;
+
+    const porcentajePagado = totalEvaluados > 0 ? (pagados / totalEvaluados) * 100 : 0;
 
     if (estado === 'rojo') {
-        showStatus('red', `Acceso Denegado: ${match[1] || 'Sin nombre'} (${normalizedPlate})`);
-    } else if (porcentajePagado >= 60) {
-        showStatus('yellow', `Autorizado con deuda: ${match[1] || 'Sin nombre'} (${normalizedPlate})`);
+        showStatus('red', `🔴 Acceso Denegado: ${match[1] || 'Sin nombre'} (${normalizedPlate})`);
+    } else if (porcentajePagado >= 60 && porcentajePagado < 100) {
+        showStatus('yellow', `🟡 Autorizado con deuda: ${match[1] || 'Sin nombre'} (${normalizedPlate})`);
     } else {
-        showStatus('green', `Autorizado: ${match[1] || 'Sin nombre'} (${normalizedPlate})`);
+        showStatus('green', `🟢 Autorizado: ${match[1] || 'Sin nombre'} (${normalizedPlate})`);
     }
 }
  (${normalizedPlate})`);
