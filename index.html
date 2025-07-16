@@ -20,9 +20,11 @@
             color: white;
             border-radius: 10px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            text-align: center;
+            padding: 20px;
         }
         .green { background-color: #28a745; }
-        .yellow { background-color: #ffc107; }
+        .yellow { background-color: #ffc107; color: black; }
         .red { background-color: #dc3545; }
         #qr-reader { 
             width: 100%;
@@ -64,8 +66,9 @@
         </div>
     </div>
 
+    <!-- Scripts -->
     <script src="https://unpkg.com/html5-qrcode"></script>
-    <script src="https://apis.google.com/js/api.js"></script>
+    <script src="https://apis.google.com/js/api.js?onload=loadGoogleAPI"></script>
     <script src="app.js"></script>
 </body>
 </html>
