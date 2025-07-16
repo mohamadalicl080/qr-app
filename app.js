@@ -71,7 +71,7 @@ async function checkVehicleStatus(plate) {
             if (estado === 'rojo') {
                 showStatus('red', `Acceso Denegado: ${match[1] || 'Sin nombre'} (${normalizedPlate})`);
             } else if (estado === 'amarillo') {
-                showStatus('yellow', `Autorizado Con Deuda Pendiente: ${match[1] || 'Sin nombre'} (${normalizedPlate})`);
+                showStatus('yellow', `Autorizado Con Deuda: ${match[1] || 'Sin nombre'} (${normalizedPlate})`);
             } else {
                 showStatus('green', `Autorizado: ${match[1] || 'Sin nombre'} (${normalizedPlate})`);
             }
