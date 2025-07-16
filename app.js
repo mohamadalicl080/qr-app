@@ -74,7 +74,7 @@ async function checkVehicleStatus(plate) {
                 showStatus('green', `Autorizado: ${match[1] || 'Sin nombre'} (${normalizedPlate})`);
             }
         } else {
-            showStatus('purple', 'Patente no encontrada en el registro');
+            showStatus('green', 'Patente no encontrada en el registro');
         }
 
     } catch (error) {
