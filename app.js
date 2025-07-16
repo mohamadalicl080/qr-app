@@ -66,7 +66,17 @@ async function checkVehicleStatus(plate) {
 
         const match = rows.find(row => row[0] && row[0].trim().toUpperCase() === normalizedPlate);
 
-          if (estado === 'rojo') {
+       if (match) {
+    const estado = match[match.length - 1]?.trim().toLowerCase();
+
+    // Calcular porcentaje de pagos: columnas desde D (índice 3) hasta la penúltima
+    const meses = match.slice(3, match.length - 1);
+    const pagados = meses.filter(m => m.trim().toLowerCase() === "pagado").length;
+    const vencidos = meses.filter(m => m.trim().toLowerCase() === "vencido").length;
+    const totalEvaluados = pagados + vencidos;
+    const porcentajePagado = totalEvaluados > 0 ? (pagados / totalEvaluados) * 100 : 0;
+
+    if (estado === 'rojo') {
         showStatus('red', `🔴 Acceso Denegado: ${match[1] || 'Sin nombre'} (${normalizedPlate})`);
     } else if (porcentajePagado >= 60 && porcentajePagado < 100) {
         showStatus('yellow', `🟡 Autorizado con deuda pendiente: ${match[1] || 'Sin nombre'} (${normalizedPlate})`);
