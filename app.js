@@ -66,12 +66,26 @@ async function checkVehicleStatus(plate) {
 
         const match = rows.find(row => row[0] && row[0].trim().toUpperCase() === normalizedPlate);
 
-        if (match) {
-            const estado = match[match.length - 1]?.trim().toLowerCase();
-            if (estado === 'rojo') {
-                showStatus('red', `Acceso Denegado: ${match[1] || 'Sin nombre'} (${normalizedPlate})`);
-            } else {
-                showStatus('green', `Autorizado: ${match[1] || 'Sin nombre'} (${normalizedPlate})`);
+        
+if (match) {
+    const estado = match[match.length - 1]?.trim().toLowerCase();
+
+    // Calcular porcentaje de pagos
+    const meses = match.slice(3, match.length - 1); // Asumiendo que las columnas de meses están entre la 4 y anteúltima
+    const pagados = meses.filter(m => m.trim().toLowerCase() === "pagado").length;
+    const vencidos = meses.filter(m => m.trim().toLowerCase() === "vencido").length;
+    const totalValidos = pagados + vencidos;
+    const porcentajePagado = totalValidos === 0 ? 0 : (pagados / totalValidos) * 100;
+
+    if (estado === 'rojo') {
+        showStatus('red', `Acceso Denegado: ${match[1] || 'Sin nombre'} (${normalizedPlate})`);
+    } else if (porcentajePagado >= 60) {
+        showStatus('yellow', `Autorizado con deuda: ${match[1] || 'Sin nombre'} (${normalizedPlate})`);
+    } else {
+        showStatus('green', `Autorizado: ${match[1] || 'Sin nombre'} (${normalizedPlate})`);
+    }
+}
+ (${normalizedPlate})`);
             }
         } else {
             showStatus('gray', 'Patente no encontrada en el registro');
