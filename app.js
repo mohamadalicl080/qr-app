@@ -75,16 +75,25 @@ async function checkVehicleStatus(plate) {
     const totalEvaluados = pagados + vencidos;
     const porcentajePagado = totalEvaluados > 0 ? (pagados / totalEvaluados) * 100 : 0;
 
+    console.log("🔍 Debug:");
+    console.log("Patente:", normalizedPlate);
+    console.log("Pagados:", pagados);
+    console.log("Vencidos:", vencidos);
+    console.log("Total evaluados:", totalEvaluados);
+    console.log("Porcentaje pagado:", porcentajePagado.toFixed(2));
+    console.log("Estado (última columna):", estado);
+
     if (estado === 'rojo') {
         showStatus('red', `🔴 Acceso Denegado: ${match[1] || 'Sin nombre'} (${normalizedPlate})`);
     } else if (vencidos > 0 && porcentajePagado >= 60) {
-        showStatus('yellow', `🟡 Autorizado con deuda pendiente: ${match[1] || 'Sin nombre'} (${normalizedPlate})`);
+        showStatus('yellow', `🟡 Autorizado con deuda pendiente (${porcentajePagado.toFixed(0)}% pagado): ${match[1] || 'Sin nombre'} (${normalizedPlate})`);
     } else {
         showStatus('green', `🟢 Autorizado: ${match[1] || 'Sin nombre'} (${normalizedPlate})`);
     }
 } else {
     showStatus('red', 'Patente no encontrada en el registro');
 }
+
 
     } catch (error) {
         console.error('Error al consultar la planilla:', error);
