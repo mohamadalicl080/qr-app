@@ -56,12 +56,12 @@
             <div class="input-group">
                 <input type="text" id="plate-input" class="form-control form-control-lg" 
                        placeholder="Ingrese patente" autocomplete="off">
-                <button class="btn btn-primary btn-lg" id="check-button">Verificar</button>
+                <button class="btn btn-primary btn-lg" onclick="checkPlate()">Verificar</button>
             </div>
         </div>
 
         <div class="text-center mb-4">
-            <button class="btn btn-lg btn-success" id="scan-button">Escanear QR</button>
+            <button class="btn btn-lg btn-success" onclick="startScanner()">Escanear QR</button>
         </div>
         <div id="qr-reader" style="display: none;"></div>
 
@@ -73,7 +73,6 @@
     <script src="https://unpkg.com/html5-qrcode"></script>
     <script>
         function handleClientLoad() {
-            console.log('Google client loaded');
             loadGoogleAPI();
         }
     </script>
