@@ -13,7 +13,7 @@ function showLoading() {
 
 // Inicializar Google Sheets API
 async function initGoogleSheetsAPI() {
-    showLoading();
+
     try {
         await gapi.client.init({
             apiKey: API_KEY,
@@ -37,7 +37,7 @@ async function initGoogleSheetsAPI() {
 
 // Cargar la API de Google
 function loadGoogleAPI() {
-    showLoading();
+
     gapi.load('client', initGoogleSheetsAPI);
 }
 
@@ -48,12 +48,8 @@ async function checkVehicleStatus(plate) {
         return;
     }
 
-    if (!isApiReady) {
-        showStatus('yellow', 'El sistema está iniciando, por favor espere unos segundos...');
-        return;
-    }
 
-    showLoading();
+
 
     try {
         const response = await gapi.client.sheets.spreadsheets.values.get({
