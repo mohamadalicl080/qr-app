@@ -7,9 +7,6 @@ let html5QrcodeScanner = null;
 let isApiReady = false;
 
 // Función para mostrar el estado de carga
-function showLoading() {
-    showStatus('yellow', 'Cargando... Por favor espere');
-}
 
 // Inicializar Google Sheets API
 async function initGoogleSheetsAPI() {
