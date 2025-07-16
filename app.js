@@ -4,6 +4,7 @@ const SPREADSHEET_ID = '1gZya2Vpk9lbFczvycPZYcamIGhh7WE5hAEZ6NLc0VlY';
 const RANGE = 'Hoja1!A2:Z';
 
 let html5QrcodeScanner = null;
+let isApiReady = false;
 
 // Función para mostrar el estado de carga
 function showLoading() {
@@ -12,14 +13,13 @@ function showLoading() {
 
 // Inicializar Google Sheets API
 async function initGoogleSheetsAPI() {
-    showLoading();
     try {
         await gapi.client.init({
             apiKey: API_KEY,
             discoveryDocs: ["https://sheets.googleapis.com/$discovery/rest?version=v4"],
         });
         console.log('API inicializada correctamente');
-        showStatus('green', 'Sistema listo para verificar patentes');
+        isApiReady = true;
         
         // Verificar conexión
         const testResponse = await gapi.client.sheets.spreadsheets.values.get({
@@ -35,7 +35,6 @@ async function initGoogleSheetsAPI() {
 
 // Cargar la API de Google
 function loadGoogleAPI() {
-    showLoading();
     gapi.load('client', initGoogleSheetsAPI);
 }
 
@@ -46,6 +45,10 @@ async function checkVehicleStatus(plate) {
         return;
     }
 
+    if (!isApiReady) {
+        showStatus('yellow', 'El sistema está iniciando, por favor espere unos segundos...');
+        return;
+    }
 
     showLoading();
 
@@ -169,4 +172,3 @@ window.addEventListener('error', function(event) {
     console.error('Error global:', event.error);
     showStatus('red', 'Error en la aplicación. Por favor, recarga la página.');
 });
-
