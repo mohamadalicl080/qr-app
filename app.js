@@ -4,20 +4,31 @@ const SPREADSHEET_ID = '1gZya2Vpk9lbFczvycPZYcamIGhh7WE5hAEZ6NLc0VlY';
 const RANGE = 'Hoja1!A2:Z';
 
 let html5QrcodeScanner = null;
-let isApiReady = false;
 
-// Función para mostrar el estado de carga
+// Función para mostrar el estado
+function showStatus(color, message) {
+    const statusDiv = document.getElementById('status');
+    const statusText = document.getElementById('status-text');
+    
+    if (statusDiv && statusText) {
+        statusDiv.style.display = 'flex';
+        statusDiv.className = `status-display ${color}`;
+        statusText.innerHTML = message.replace(/\n/g, '<br>');
+    } else {
+        console.error('Elementos de estado no encontrados');
+    }
+}
 
 // Inicializar Google Sheets API
 async function initGoogleSheetsAPI() {
-        try {
+    try {
         await gapi.client.init({
             apiKey: API_KEY,
             discoveryDocs: ["https://sheets.googleapis.com/$discovery/rest?version=v4"],
         });
         console.log('API inicializada correctamente');
-        isApiReady = true;
-                
+        showStatus('green', 'Sistema listo para verificar patentes');
+        
         // Verificar conexión
         const testResponse = await gapi.client.sheets.spreadsheets.values.get({
             spreadsheetId: SPREADSHEET_ID,
@@ -32,7 +43,7 @@ async function initGoogleSheetsAPI() {
 
 // Cargar la API de Google
 function loadGoogleAPI() {
-        gapi.load('client', initGoogleSheetsAPI);
+    gapi.load('client', initGoogleSheetsAPI);
 }
 
 // Verificar estado del vehículo
@@ -42,12 +53,6 @@ async function checkVehicleStatus(plate) {
         return;
     }
 
-    if (!isApiReady) {
-        showStatus('yellow', 'El sistema está iniciando, por favor espere unos segundos...');
-        return;
-    }
-
-    
     try {
         const response = await gapi.client.sheets.spreadsheets.values.get({
             spreadsheetId: SPREADSHEET_ID,
@@ -72,21 +77,7 @@ async function checkVehicleStatus(plate) {
 
     } catch (error) {
         console.error('Error al consultar la planilla:', error);
-        showStatus('gray', 'Error al consultar la planilla');
-    }
-}
-
-// Mostrar estado
-function showStatus(color, message) {
-    const statusDiv = document.getElementById('status');
-    const statusText = document.getElementById('status-text');
-    
-    if (statusDiv && statusText) {
-        statusDiv.style.display = 'flex';
-        statusDiv.className = `status-display ${color}`;
-        statusText.innerHTML = message.replace(/\n/g, '<br>');
-    } else {
-        console.error('Elementos de estado no encontrados');
+        showStatus('red', 'Error al consultar la planilla. Verifica tu conexión a internet.');
     }
 }
 
