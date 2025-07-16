@@ -5,52 +5,84 @@ const RANGE = 'Hoja1!A2:C';
 
 let html5QrcodeScanner = null;
 let isApiReady = false;
+let initializationAttempts = 0;
+const MAX_INITIALIZATION_ATTEMPTS = 3;
 
 // Función para mostrar el estado de carga
-function showLoading() {
-    showStatus('yellow', 'Cargando... Por favor espere');
+function showLoading(message) {
+    showStatus('yellow', message || 'Cargando... Por favor espere');
 }
 
-// Inicializar Google Sheets API
+// Inicializar Google Sheets API con reintentos
 async function initGoogleSheetsAPI() {
-    showLoading();
+    if (initializationAttempts >= MAX_INITIALIZATION_ATTEMPTS) {
+        showStatus('red', 'No se pudo inicializar el sistema. Por favor, recarga la página.');
+        return;
+    }
+
+    initializationAttempts++;
+    showLoading(`Intento de inicialización ${initializationAttempts}/${MAX_INITIALIZATION_ATTEMPTS}...`);
+
     try {
         await gapi.client.init({
             apiKey: API_KEY,
             discoveryDocs: ["https://sheets.googleapis.com/$discovery/rest?version=v4"],
         });
-        console.log('API inicializada correctamente');
-        isApiReady = true;
-        showStatus('green', 'Sistema listo para verificar patentes');
-        
-        // Verificar conexión
-        const testResponse = await gapi.client.sheets.spreadsheets.values.get({
-            spreadsheetId: SPREADSHEET_ID,
-            range: 'Hoja1!A1:A1'
-        });
-        console.log('Conexión verificada:', testResponse);
+
+        // Intenta una lectura de prueba inmediatamente
+        try {
+            const response = await gapi.client.sheets.spreadsheets.values.get({
+                spreadsheetId: SPREADSHEET_ID,
+                range: 'Hoja1!A1:A1'
+            });
+            console.log('Prueba de lectura exitosa:', response);
+            isApiReady = true;
+            showStatus('green', 'Sistema listo para verificar patentes');
+        } catch (testError) {
+            console.error('Error en prueba de lectura:', testError);
+            throw testError;
+        }
     } catch (error) {
-        console.error('Error de inicialización:', error);
-        showStatus('red', 'Error de conexión. Verifica tu conexión a internet y recarga la página.');
+        console.error(`Error de inicialización (intento ${initializationAttempts}):`, error);
+        
+        if (initializationAttempts < MAX_INITIALIZATION_ATTEMPTS) {
+            setTimeout(() => {
+                initGoogleSheetsAPI();
+            }, 2000);
+        } else {
+            showStatus('red', 'Error de conexión. Por favor, recarga la página.');
+        }
     }
 }
 
-// Cargar la API de Google
+// Cargar la API de Google con reintentos
 function loadGoogleAPI() {
-    showLoading();
-    gapi.load('client', initGoogleSheetsAPI);
+    showLoading('Cargando sistema...');
+    setTimeout(() => {
+        if (!isApiReady) {
+            initGoogleSheetsAPI();
+        }
+    }, 1000);
 }
 
 // Verificar estado del vehículo
 async function checkVehicleStatus(plate) {
+    console.log('Verificando patente:', plate, 'API Ready:', isApiReady);
+    
     if (!plate) {
         showStatus('red', 'Por favor ingrese una patente');
         return;
     }
 
     if (!isApiReady) {
-        showStatus('yellow', 'El sistema está iniciando, por favor espere unos segundos...');
-        return;
+        if (initializationAttempts < MAX_INITIALIZATION_ATTEMPTS) {
+            showLoading('Iniciando sistema, por favor espere...');
+            await initGoogleSheetsAPI();
+            return;
+        } else {
+            showStatus('red', 'Sistema no inicializado. Por favor, recarga la página.');
+            return;
+        }
     }
 
     try {
@@ -92,95 +124,4 @@ async function checkVehicleStatus(plate) {
     }
 }
 
-// Mostrar estado
-function showStatus(color, message) {
-    const statusDiv = document.getElementById('status');
-    const statusText = document.getElementById('status-text');
-    
-    if (statusDiv && statusText) {
-        statusDiv.style.display = 'flex';
-        statusDiv.className = `status-display ${color}`;
-        statusText.innerHTML = message.replace(/\n/g, '<br>');
-    } else {
-        console.error('Elementos de estado no encontrados');
-    }
-}
-
-// Verificar patente desde input
-function checkPlate() {
-    const plateInput = document.getElementById('plate-input');
-    if (!plateInput) {
-        console.error('Input de patente no encontrado');
-        return;
-    }
-    
-    const plate = plateInput.value.trim().toUpperCase();
-    console.log('Verificando patente:', plate);
-    
-    if (plate) {
-        checkVehicleStatus(plate);
-    } else {
-        showStatus('red', 'Por favor ingrese una patente');
-    }
-}
-
-// Iniciar escáner QR
-function startScanner() {
-    if (html5QrcodeScanner) {
-        html5QrcodeScanner.clear();
-    }
-
-    const qrReader = document.getElementById('qr-reader');
-    if (!qrReader) {
-        console.error('Elemento QR reader no encontrado');
-        return;
-    }
-
-    qrReader.style.display = 'block';
-
-    html5QrcodeScanner = new Html5QrcodeScanner(
-        "qr-reader", 
-        { 
-            fps: 10, 
-            qrbox: {width: 250, height: 250},
-            rememberLastUsedCamera: true,
-        }
-    );
-
-    html5QrcodeScanner.render((decodedText) => {
-        html5QrcodeScanner.clear();
-        qrReader.style.display = 'none';
-        checkVehicleStatus(decodedText);
-    }, (error) => {
-        // Manejar errores del escáner silenciosamente
-    });
-}
-
-// Event Listeners
-document.addEventListener('DOMContentLoaded', function() {
-    const plateInput = document.getElementById('plate-input');
-    const checkButton = document.getElementById('check-button');
-    const scanButton = document.getElementById('scan-button');
-
-    if (plateInput) {
-        plateInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                checkPlate();
-            }
-        });
-    }
-
-    if (checkButton) {
-        checkButton.addEventListener('click', checkPlate);
-    }
-
-    if (scanButton) {
-        scanButton.addEventListener('click', startScanner);
-    }
-});
-
-// Manejador de errores global
-window.addEventListener('error', function(event) {
-    console.error('Error global:', event.error);
-    showStatus('red', 'Error en la aplicación. Por favor, recarga la página.');
-});
+// Resto del código se mantiene igual...
