@@ -25,31 +25,27 @@ async function checkVehicleStatus(plate) {
         const match = rows.find(row => row[0] && row[0].trim().toUpperCase() === normalizedPlate);
 
         if (match) {
-            // Índices para los meses (ajustados según tu hoja)
-            const mesesIndices = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]; // Ajusta según tus columnas
-            const totalMeses = mesesIndices.length;
-            let mesesPagados = 0;
+            // Obtener el estado de la última columna
+            const estado = match[match.length - 1]?.trim().toLowerCase();
+            
+            // Calcular el porcentaje de meses verdes
+            const totalMesesPagados = match.slice(2, 14).filter(cell => 
+                cell && cell.trim().toLowerCase() === 'verde'
+            ).length;
+            
+            const porcentajePagado = (totalMesesPagados / 12) * 100;
+            console.log('Porcentaje pagado:', porcentajePagado, '%'); // Para debugging
 
-            // Contar meses pagados (verdes)
-            mesesIndices.forEach(index => {
-                if (match[index] && match[index].trim().toLowerCase() === 'verde') {
-                    mesesPagados++;
-                }
-            });
-
-            const porcentajePagado = (mesesPagados / totalMeses) * 100;
-
-            // Estado final de la última columna
-            const estadoFinal = match[match.length - 1]?.trim().toLowerCase();
-
-            if (estadoFinal === 'rojo') {
+            if (estado === 'rojo') {
                 showStatus('red', `Acceso Denegado: ${match[1] || 'Sin nombre'} (${normalizedPlate})`);
-            } else if (porcentajePagado >= 60 && porcentajePagado < 100) {
-                showStatus('yellow', `Autorizado con deuda pendiente: ${match[1] || 'Sin nombre'} (${normalizedPlate}) - ${Math.round(porcentajePagado)}% de meses pagados`);
-            } else if (porcentajePagado === 100) {
+            } else if (estado === 'verde' && porcentajePagado >= 60 && porcentajePagado < 100) {
+                showStatus('yellow', `Autorizado con deuda pendiente: ${match[1] || 'Sin nombre'} (${normalizedPlate})`);
+            } else if (estado === 'verde' && porcentajePagado === 100) {
                 showStatus('green', `Autorizado: ${match[1] || 'Sin nombre'} (${normalizedPlate})`);
-            } else {
+            } else if (estado === 'verde' && porcentajePagado < 60) {
                 showStatus('red', `Acceso Denegado: ${match[1] || 'Sin nombre'} (${normalizedPlate}) - Menos del 60% de meses pagados`);
+            } else {
+                showStatus('gray', `Estado no reconocido para: ${match[1] || 'Sin nombre'} (${normalizedPlate})`);
             }
         } else {
             showStatus('gray', 'Patente no encontrada en el registro');
