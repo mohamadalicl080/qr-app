@@ -1,183 +1,112 @@
-// Configuración de la API de Google Sheets
-const API_KEY = 'AIzaSyBgp_1Ujzgfd7vnzh0yyN-_jEQYmj4wC20';
-const SPREADSHEET_ID = '1gZya2Vpk9lbFczvycPZYcamIGhh7WE5hAEZ6NLc0VlY';
-const RANGE = 'Hoja1!A2:C';
+import React, { useState, useEffect } from "react";
+import { Html5QrcodeScanner } from "html5-qrcode";
 
-let html5QrcodeScanner = null;
+function App() {
+  const [data, setData] = useState([]);
+  const [patente, setPatente] = useState("");
+  const [resultado, setResultado] = useState(null);
+  const [scanning, setScanning] = useState(false);
 
-
-// Función para mostrar el estado de carga
-function showLoading() {
-    showStatus('yellow', 'Cargando... Por favor espere');
-}
-
-// Inicializar Google Sheets API
-async function initGoogleSheetsAPI() {
-    showLoading();
-    try {
-        await gapi.client.init({
-            apiKey: API_KEY,
-            discoveryDocs: ["https://sheets.googleapis.com/$discovery/rest?version=v4"],
+  // ✅ Se elimina el estado de inicialización y se carga directamente
+  useEffect(() => {
+    fetch(
+      "https://opensheet.elk.sh/1gZya2Vpk9lbFczvycPZYcamIGhh7WE5hAEZ6NLc0VlY/Hoja1"
+    )
+      .then((response) => response.json())
+      .then((json) => setData(json))
+      .catch(() => {
+        setResultado({
+          estado: "error",
+          mensaje: "Error al cargar la planilla",
         });
-        console.log('API inicializada correctamente');
-        
-        showStatus('green', 'Sistema listo para verificar patentes');
-        
-        // Verificar conexión
-        const testResponse = await gapi.client.sheets.spreadsheets.values.get({
-            spreadsheetId: SPREADSHEET_ID,
-            range: 'Hoja1!A1:A1'
-        });
-        console.log('Conexión verificada:', testResponse);
-    } catch (error) {
-        console.error('Error de inicialización:', error);
-        showStatus('red', 'Error de conexión. Verifica tu conexión a internet y recarga la página.');
-    }
-}
+      });
+  }, []);
 
-// Cargar la API de Google
-function loadGoogleAPI() {
-    showLoading();
-    gapi.load('client', initGoogleSheetsAPI);
-}
+  const verificarPatente = (valor) => {
+    const normalizado = valor.trim().toUpperCase();
+    const encontrado = data.find((item) => item.Patente === normalizado);
 
-// Verificar estado del vehículo
-async function checkVehicleStatus(plate) {
-    if (!plate) {
-        showStatus('red', 'Por favor ingrese una patente');
-        return;
-    }
-
-    
-
-    try {
-        showStatus('yellow', `Verificando patente: ${plate.toUpperCase()}...`);
-        
-        const response = await gapi.client.sheets.spreadsheets.values.get({
-            spreadsheetId: SPREADSHEET_ID,
-            range: RANGE,
-        });
-
-        console.log('Respuesta de la API:', response);
-
-        const rows = response.result.values;
-        if (!rows) {
-            showStatus('red', 'No se encontraron datos en la base de datos');
-            return;
-        }
-
-        const vehicleData = rows.find(row => row[0] && row[0].toUpperCase() === plate.toUpperCase());
-
-        if (!vehicleData) {
-            showStatus('red', `❌ VEHÍCULO NO REGISTRADO\nPatente: ${plate.toUpperCase()}`);
-            return;
-        }
-
-        const debt = parseFloat(vehicleData[1]) || 0;
-        const paymentPercentage = parseFloat(vehicleData[2]) || 0;
-
-        if (debt <= 0) {
-            showStatus('green', `✅ ACCESO PERMITIDO\nPatente: ${plate.toUpperCase()}\nSin deuda pendiente`);
-        } else if (paymentPercentage >= 60) {
-            showStatus('yellow', `⚠️ ACCESO PERMITIDO\nPatente: ${plate.toUpperCase()}\nDeuda: $${debt.toLocaleString()}\nPago: ${paymentPercentage}%`);
-        } else {
-            showStatus('red', `❌ ACCESO DENEGADO\nPatente: ${plate.toUpperCase()}\nDeuda: $${debt.toLocaleString()}\nPago: ${paymentPercentage}%`);
-        }
-    } catch (error) {
-        console.error('Error al verificar:', error);
-        showStatus('red', 'Error al verificar. Por favor, intenta nuevamente.');
-    }
-}
-
-// Mostrar estado
-function showStatus(color, message) {
-    const statusDiv = document.getElementById('status');
-    const statusText = document.getElementById('status-text');
-    
-    if (statusDiv && statusText) {
-        statusDiv.style.display = 'flex';
-        statusDiv.className = `status-display ${color}`;
-        statusText.innerHTML = message.replace(/\n/g, '<br>');
+    if (!encontrado) {
+      setResultado({
+        estado: "denegado",
+        mensaje: "Patente no encontrada",
+      });
+    } else if (encontrado["Estado General"] === "Rojo") {
+      setResultado({
+        estado: "denegado",
+        mensaje: "Acceso denegado",
+      });
     } else {
-        console.error('Elementos de estado no encontrados');
+      setResultado({
+        estado: "autorizado",
+        mensaje: `Autorizado: ${encontrado.Propietario}`,
+      });
     }
-}
+  };
 
-// Verificar patente desde input
-function checkPlate() {
-    const plateInput = document.getElementById('plate-input');
-    if (!plateInput) {
-        console.error('Input de patente no encontrado');
-        return;
-    }
-    
-    const plate = plateInput.value.trim().toUpperCase();
-    console.log('Verificando patente:', plate);
-    
-    if (plate) {
-        checkVehicleStatus(plate);
-    } else {
-        showStatus('red', 'Por favor ingrese una patente');
-    }
-}
+  const handleScan = () => {
+    if (scanning) return;
 
-// Iniciar escáner QR
-function startScanner() {
-    if (html5QrcodeScanner) {
-        html5QrcodeScanner.clear();
-    }
-
-    const qrReader = document.getElementById('qr-reader');
-    if (!qrReader) {
-        console.error('Elemento QR reader no encontrado');
-        return;
-    }
-
-    qrReader.style.display = 'block';
-
-    html5QrcodeScanner = new Html5QrcodeScanner(
-        "qr-reader", 
-        { 
-            fps: 10, 
-            qrbox: {width: 250, height: 250},
-            rememberLastUsedCamera: true,
-        }
-    );
-
-    html5QrcodeScanner.render((decodedText) => {
-        html5QrcodeScanner.clear();
-        qrReader.style.display = 'none';
-        checkVehicleStatus(decodedText);
-    }, (error) => {
-        // Manejar errores del escáner silenciosamente
+    setScanning(true);
+    const scanner = new Html5QrcodeScanner("reader", {
+      fps: 10,
+      qrbox: 250,
     });
+
+    scanner.render(
+      (decodedText) => {
+        setPatente(decodedText);
+        verificarPatente(decodedText);
+        scanner.clear();
+        setScanning(false);
+      },
+      (error) => {
+        console.warn("QR error", error);
+      }
+    );
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center">
+      <h1 className="text-3xl font-bold mb-4">
+        Control de Acceso Estacionamiento
+      </h1>
+      <div className="flex gap-2 mb-4">
+        <input
+          value={patente}
+          onChange={(e) => setPatente(e.target.value)}
+          placeholder="Ingrese patente"
+          className="p-2 border rounded w-80"
+        />
+        <button
+          onClick={() => verificarPatente(patente)}
+          className="bg-blue-600 text-white px-4 py-2 rounded"
+        >
+          Verificar
+        </button>
+      </div>
+      <button
+        onClick={handleScan}
+        className="bg-green-600 text-white px-4 py-2 rounded mb-4"
+      >
+        Escanear QR
+      </button>
+      <div id="reader" className="mb-4" />
+      {resultado && (
+        <div
+          className={`p-6 rounded shadow-md text-center text-lg font-bold ${
+            resultado.estado === "autorizado"
+              ? "bg-green-100 text-green-800"
+              : resultado.estado === "denegado"
+              ? "bg-red-300 text-white"
+              : "bg-gray-300 text-black"
+          }`}
+        >
+          {resultado.mensaje}
+        </div>
+      )}
+    </div>
+  );
 }
 
-// Event Listeners
-document.addEventListener('DOMContentLoaded', function() {
-    const plateInput = document.getElementById('plate-input');
-    const checkButton = document.getElementById('check-button');
-    const scanButton = document.getElementById('scan-button');
-
-    if (plateInput) {
-        plateInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                checkPlate();
-            }
-        });
-    }
-
-    if (checkButton) {
-        checkButton.addEventListener('click', checkPlate);
-    }
-
-    if (scanButton) {
-        scanButton.addEventListener('click', startScanner);
-    }
-});
-
-// Manejador de errores global
-window.addEventListener('error', function(event) {
-    console.error('Error global:', event.error);
-    showStatus('red', 'Error en la aplicación. Por favor, recarga la página.');
-});
+export default App;
