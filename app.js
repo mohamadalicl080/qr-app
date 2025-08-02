@@ -1,6 +1,6 @@
 // Configuración de la API de Google Sheets
 const API_KEY = 'AIzaSyBgp_1Ujzgfd7vnzh0yyN-_jEQYmj4wC20';
-const SPREADSHEET_ID = '1gZya2Vpk9lbFczvycPZYcamIGhh7WE5hAEZ6NLc0VlY';
+const SPREADSHEET_ID = '1sW-RAJZERlrbfvwE_10ba1T_dL6uj0IxlCsEWGQCK3g';
 const RANGE = 'Hoja1!A2:Z';
 
 let html5QrcodeScanner = null;
